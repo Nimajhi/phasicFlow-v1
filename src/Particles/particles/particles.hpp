@@ -47,7 +47,18 @@ private:
 
 	/// contact force field
 	realx3PointField_D           contactForce_;
-
+	
+	/// forceChain
+	realx3PointField_D           forceChainFCn_;
+	bool forceChainActive_ =     false;
+        
+	/// Distance Colliding Particles
+	realx3PointField_D                forceChainDist_;
+	/// Pairs of Colliding Particles
+	realx3PointField_D                forceChainPairs_;
+	/// pair Counter
+	uint32PointField_D                pairCounter_;
+	
 	/// contact torque field
 	realx3PointField_D           contactTorque_;
 
@@ -70,7 +81,22 @@ protected:
 	{
 		contactTorque_.fill(zero3);
 	}
-
+        
+    void zeroFCn()
+    {
+        	forceChainFCn_.fill(zero3);
+    }
+        
+    void zeroDist()
+    {
+        	forceChainDist_.fill(zero3);
+    }      
+        
+    void zeroPairs()
+    {
+        	forceChainPairs_.fill(zero3);
+    }    
+               	
 	inline auto& dynPointStruct()
 	{
 		return dynPointStruct_;
@@ -174,8 +200,53 @@ public:
 	{
 		return contactForce_;
 	}
+	
+	inline auto& forceChainFCn()
+	{
+		return forceChainFCn_;
+	}
 
-	inline auto& contactTorque()
+	inline const auto& forceChainFCn() const
+	{
+		return forceChainFCn_;
+	}
+        
+        bool forceChainActive() const
+    	{
+          return forceChainActive_;
+    	}
+    	
+    	inline auto& forceChainDist()
+	{
+		return forceChainDist_;
+	}
+
+	inline const auto& forceChainDist() const
+	{
+		return forceChainDist_;
+	}
+	
+	inline auto& forceChainPairs()
+	{
+		return forceChainPairs_;
+	}
+
+	inline const auto& forceChainPairs() const
+	{
+		return forceChainPairs_;
+	}
+	
+	inline auto& pairCounter()
+	{
+		return pairCounter_;
+	}
+
+	inline const auto& pairCounter() const
+	{
+		return pairCounter_;
+	}
+	
+       	inline auto& contactTorque()
 	{
 		return contactTorque_;
 	}
@@ -202,6 +273,7 @@ public:
 	{
 		return idHandler_().maxId();
 	}
+	
 
 	bool         beforeIteration() override;
 
