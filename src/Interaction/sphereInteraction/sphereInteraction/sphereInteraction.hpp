@@ -85,6 +85,9 @@ private:
 	/// contact force model 
 	uniquePtr<ContactForceModel>  		forceModel_ 	= nullptr;
 
+	/// forceChain activation
+	bool                                forceChainActive_ = false;
+	
 	/// contact list for particle-particle interactoins (keeps the history)
 	uniquePtr<ContactListType> 			ppContactList_ = nullptr;
 
