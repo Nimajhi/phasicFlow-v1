@@ -25,16 +25,36 @@ bool pFlow::sphereInteraction<cFM,gMM, cLT>::createSphereInteraction()
 	realVector_D rhoD("densities", this->densities());
 
 	auto modelDict = this->subDict("model");
+	
+	
+ 	word forceChainVal = "No"; // Default value
+    	forceChainVal = modelDict.getValOrSet<word>("forceChain", forceChainVal);
 
+    if (forceChainVal == "Yes" || forceChainVal == "yes" || 
+        forceChainVal == "True"|| forceChainVal == "true" )
+    {
+        forceChainActive_ = true;
+        REPORT(1) << "ForceChain is " << Yellow_Text("active")
+                  << " in this simulation." << END_REPORT;
+    }
+    else
+    {
+        forceChainActive_ = false;
+        REPORT(1) << "ForceChain is " << Yellow_Text("inactive")
+                  << " in this simulation." << END_REPORT;
+    }
+
+	
 	forceModel_ = makeUnique<ContactForceModel>(
 		this->numMaterials(),
 		rhoD.deviceView(),
-		modelDict );
-
-
+		modelDict);
+        
+       	
 	uint32 nPrtcl = sphParticles_.size();
+	
 
-	contactSearch_ = contactSearch::create(
+    contactSearch_ = contactSearch::create(
 	subDict("contactSearch"),
 	sphParticles_.extendedDomain().domainBox(),
 	sphParticles_,
@@ -53,7 +73,13 @@ template<typename cFM,typename gMM,template <class, class, class> class cLT>
 bool pFlow::sphereInteraction<cFM,gMM, cLT>::sphereSphereInteraction()
 {
 	auto lastItem = ppContactList_().loopCount();
+        
 
+    if(forceChainActive_)
+    {
+        Kokkos::deep_copy(sphParticles_.pairCounter().deviceViewAll(), 0u);
+    }
+	
 	// create the kernel functor 
 	pFlow::sphereInteractionKernels::ppInteractionFunctor 
 		ppInteraction(
@@ -66,8 +92,13 @@ bool pFlow::sphereInteraction<cFM,gMM, cLT>::sphereSphereInteraction()
 			sphParticles_.velocity().deviceViewAll(),
 			sphParticles_.rVelocity().deviceViewAll(),
 			sphParticles_.contactForce().deviceViewAll(),
-			sphParticles_.contactTorque().deviceViewAll()
-			);
+			sphParticles_.contactTorque().deviceViewAll(),
+			sphParticles_.forceChainFCn().deviceViewAll(),
+			sphParticles_.forceChainDist().deviceViewAll(),
+			sphParticles_.forceChainPairs().deviceViewAll(),
+			sphParticles_.pairCounter().deviceViewAll(),
+			forceChainActive_
+			          );
 	
 	Kokkos::parallel_for(
 		"ppInteraction",
