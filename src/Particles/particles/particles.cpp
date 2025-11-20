@@ -44,6 +44,46 @@ pFlow::particles::particles(systemControl& control, const shape& shapes)
       dynPointStruct_,
       zero3
     ),
+    forceChainFCn_(
+      objectFile(
+        "forceChainFCn",
+        "",
+        objectFile::READ_IF_PRESENT,
+        objectFile::WRITE_ALWAYS
+      ),
+      dynPointStruct_,
+      zero3
+      ),
+    forceChainDist_(
+      objectFile(
+        "distance",
+        "",
+        objectFile::READ_IF_PRESENT,
+        objectFile::WRITE_ALWAYS
+      ),
+      dynPointStruct_,
+      zero3
+      ),  
+    forceChainPairs_(
+      objectFile(
+        "pairs",
+        "",
+        objectFile::READ_IF_PRESENT,
+        objectFile::WRITE_ALWAYS
+      ),
+      dynPointStruct_,
+      zero3
+      ),  
+    pairCounter_(
+      objectFile(
+        "pairCount",
+        "",
+        objectFile::READ_NEVER,
+        objectFile::WRITE_NEVER
+      ),
+      dynPointStruct_,
+      0
+      ), 
     contactTorque_(
       objectFile(
         "contactTorque",
@@ -77,7 +117,11 @@ pFlow::particles::beforeIteration()
   }
 
   zeroForce();
-	zeroTorque();
+  zeroTorque();
+  zeroFCn();
+  zeroDist();
+  zeroPairs();
+        
   baseFieldBoundaryUpdateTimer_.start();
   shapeIndex_.updateBoundariesSlaveToMasterIfRequested();
   idHandler_().updateBoundariesSlaveToMasterIfRequested();
