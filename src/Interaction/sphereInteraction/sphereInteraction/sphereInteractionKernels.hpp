@@ -37,19 +37,25 @@ struct ppInteractionFunctor
 	using ValueType = typename ContactListType::ValueType;
 
 	real dt_;
+	
+
 
 	ContactForceModel forceModel_;
 	ContactListType   tobeFilled_;
+	bool              forceChainActive_;
 
 	deviceViewType1D<real>  		diam_;
 	deviceViewType1D<uint32> 		propId_;
 	deviceViewType1D<realx3>  		pos_;
 	deviceViewType1D<realx3>  		lVel_;
 	deviceViewType1D<realx3>  		rVel_;
-	deviceViewType1D<realx3>	cForce_;
-	deviceViewType1D<realx3>	cTorque_;
-
-
+	deviceViewType1D<realx3>		cForce_;
+	deviceViewType1D<realx3>		cTorque_;
+	deviceViewType1D<realx3>       	forceChainFCn_; 
+    deviceViewType1D<realx3>        forceChainDist_;
+  	deviceViewType1D<realx3>        forceChainPairs_;
+  	deviceViewType1D<uint32>        pairCounter_;
+        
 	ppInteractionFunctor(
 		real dt,
 		ContactForceModel 		forceModel,
@@ -60,7 +66,13 @@ struct ppInteractionFunctor
 		deviceViewType1D<realx3>  		lVel,
 		deviceViewType1D<realx3>  		rVel,
 		deviceViewType1D<realx3>		cForce,
-		deviceViewType1D<realx3> 		cTorque )
+		deviceViewType1D<realx3> 		cTorque,
+		deviceViewType1D<realx3>        forceChainFCn,
+		deviceViewType1D<realx3>          forceChainDist,
+		deviceViewType1D<realx3>          forceChainPairs,
+		deviceViewType1D<uint32>          pairCounter,
+		bool                            forceChainActive
+		)
 	:
 		dt_(dt),
 		forceModel_(forceModel),
@@ -71,7 +83,15 @@ struct ppInteractionFunctor
 		lVel_(lVel),
 		rVel_(rVel),
 		cForce_(cForce), // this is converted to an atomic vector 
-		cTorque_(cTorque) // this is converted to an atomic vector 
+		cTorque_(cTorque),// this is converted to an atomic vector 
+		forceChainFCn_(forceChainFCn),
+		forceChainDist_(forceChainDist),
+		forceChainActive_(forceChainActive),
+	    forceChainPairs_(forceChainPairs),
+	    pairCounter_(pairCounter)
+		
+		
+		  
 	{}
 
 	INLINE_FUNCTION_HD
@@ -82,6 +102,8 @@ struct ppInteractionFunctor
 
 		auto [i,j] = tobeFilled_.getPair(n);
 		
+
+		
 		real Ri = 0.5*diam_[i];
 		real Rj = 0.5*diam_[j];
 		realx3 xi = pos_[i];
@@ -89,6 +111,7 @@ struct ppInteractionFunctor
 		real dist = length(xj-xi);
 		real ovrlp = (Ri+Rj) - dist;
 		
+						 
 		if( ovrlp >0.0 )
 		{
 			
@@ -116,7 +139,39 @@ struct ppInteractionFunctor
 				history,
 				FCn, FCt
 				);
+				
+			 if (forceChainActive_)
+            {
+                
+                Kokkos::atomic_add(&forceChainFCn_[i].x_, FCn.x_);
+                Kokkos::atomic_add(&forceChainFCn_[i].y_, FCn.y_);
+                Kokkos::atomic_add(&forceChainFCn_[i].z_, FCn.z_);
 
+                Kokkos::atomic_add(&forceChainFCn_[j].x_,-FCn.x_);
+                Kokkos::atomic_add(&forceChainFCn_[j].y_,-FCn.y_);
+                Kokkos::atomic_add(&forceChainFCn_[j].z_,-FCn.z_);
+
+                
+                Kokkos::atomic_add(&forceChainDist_[i], dist);
+                Kokkos::atomic_add(&forceChainDist_[j], dist);
+
+                // pair once 
+                if (i < j)
+                {
+                    // get a unique index using atomic counter
+                    uint32_t pairIndex = Kokkos::atomic_fetch_add(&pairCounter_[0], uint32_t(1));
+
+                    // bounds check before writing
+                    const uint32_t maxPairs = static_cast<uint32_t>(forceChainPairs_.extent(0));
+                    if (pairIndex < maxPairs)
+                    {
+                        // single write of the tuple (i,j,0)
+                        forceChainPairs_[pairIndex] = realx3(real(i),real(j),static_cast<real>(0.0));
+                    }
+                    
+                } 
+            } 
+		
 			forceModel_.rollingFriction(
 				dt_, i, j,
 				propId_i, propId_j,
@@ -149,7 +204,7 @@ struct ppInteractionFunctor
 			Kokkos::atomic_add(&cTorque_[j].y_, Mji.y_);
 			Kokkos::atomic_add(&cTorque_[j].z_, Mji.z_);
 			
-
+			
 			tobeFilled_.setValue(n,history);
 
 		}
@@ -160,6 +215,7 @@ struct ppInteractionFunctor
 
 	}
 };
+
 
 
 template<
