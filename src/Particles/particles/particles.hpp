@@ -49,7 +49,7 @@ private:
 	realx3PointField_D           contactForce_;
 	
 	/// forceChain
-	realx3PointField_D           forceChainFCn_;
+	uint32PointField_D           forceChainFCn_;
 	bool forceChainActive_ =     false;
         
 	/// Distance Colliding Particles
@@ -84,7 +84,7 @@ protected:
         
     void zeroFCn()
     {
-        	forceChainFCn_.fill(zero3);
+        	forceChainFCn_.fill(zero);
     }
         
     void zeroDist()
