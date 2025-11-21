@@ -150,9 +150,10 @@ struct ppInteractionFunctor
                 Kokkos::atomic_add(&forceChainFCn_[j].x_,-FCn.x_);
                 Kokkos::atomic_add(&forceChainFCn_[j].y_,-FCn.y_);
                 Kokkos::atomic_add(&forceChainFCn_[j].z_,-FCn.z_);
-
                 
-                Kokkos::atomic_add(&forceChainDist_[i], dist);
+				real fcn_mag = length(FCn);
+
+				Kokkos::atomic_add(&forceChainDist_[i], dist);
                 Kokkos::atomic_add(&forceChainDist_[j], dist);
 
                 // pair once 
@@ -167,6 +168,7 @@ struct ppInteractionFunctor
                     {
                         // single write of the tuple (i,j,0)
                         forceChainPairs_[pairIndex] = realx3(real(i),real(j),static_cast<real>(0.0));
+						//forceChainPairs_[pairIndex] = realx3(real(i),real(j),fcn_mag);
                     }
                     
                 } 
