@@ -52,11 +52,11 @@ pFlow::particles::particles(systemControl& control, const shape& shapes)
         objectFile::WRITE_ALWAYS
       ),
       dynPointStruct_,
-      zero3
+      zero
       ),
     forceChainDist_(
       objectFile(
-        "distance",
+        "position",
         "",
         objectFile::READ_IF_PRESENT,
         objectFile::WRITE_ALWAYS
