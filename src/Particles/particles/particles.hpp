@@ -25,6 +25,7 @@ PARTICULAR PURPOSE.
 #include "demComponent.hpp"
 #include "dynamicPointStructure.hpp"
 #include "particleIdHandler.hpp"
+#include "forceChain.hpp"  
 //#include "shape.hpp"
 
 namespace pFlow
@@ -47,7 +48,10 @@ private:
 
 	/// contact force field
 	realx3PointField_D           contactForce_;
-
+	
+    /// forceChain           
+    mutable forceChain                   forceChain_;
+        
 	/// contact torque field
 	realx3PointField_D           contactTorque_;
 
@@ -70,7 +74,8 @@ protected:
 	{
 		contactTorque_.fill(zero3);
 	}
-
+        
+                     	
 	inline auto& dynPointStruct()
 	{
 		return dynPointStruct_;
@@ -104,7 +109,7 @@ public:
 	{
 		return dynPointStruct_;
 	}
-
+		
 	inline const pointStructure& pStruct() const
 	{
 		return dynPointStruct_;
@@ -174,8 +179,8 @@ public:
 	{
 		return contactForce_;
 	}
-
-	inline auto& contactTorque()
+		
+    inline auto& contactTorque()
 	{
 		return contactTorque_;
 	}
@@ -202,7 +207,10 @@ public:
 	{
 		return idHandler_().maxId();
 	}
-
+	
+	bool initializeForceChain(const dictionary& modelDict);
+    
+        
 	bool         beforeIteration() override;
 
 	bool         iterate() override;
