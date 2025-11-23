@@ -44,6 +44,7 @@ pFlow::particles::particles(systemControl& control, const shape& shapes)
       dynPointStruct_,
       zero3
     ),
+  forceChain_(control, dynPointStruct_),
     contactTorque_(
       objectFile(
         "contactTorque",
@@ -62,11 +63,23 @@ pFlow::particles::particles(systemControl& control, const shape& shapes)
 	//idHandler_().initialIdCheck();
 }
 
+bool pFlow::particles::initializeForceChain(const dictionary& modelDict) 
+{
+    forceChain_.initializeFromDict(modelDict);
+
+    // allocate fields if force chain is active
+    forceChain_.activateForceChain(control(), dynPointStruct_);
+
+    return true;
+}
+
+
 pFlow::particles::~particles()
 {
   // invalidates / unsobscribe from subscriber before its actual destruction
   addToSubscriber(nullptr, message::Empty());
 }
+
 
 bool
 pFlow::particles::beforeIteration()
@@ -78,6 +91,12 @@ pFlow::particles::beforeIteration()
 
   zeroForce();
 	zeroTorque();
+	
+	if (forceChain_.forceChainActive())
+    {
+        forceChain_.zeroAll();
+    }
+        
   baseFieldBoundaryUpdateTimer_.start();
   shapeIndex_.updateBoundariesSlaveToMasterIfRequested();
   idHandler_().updateBoundariesSlaveToMasterIfRequested();
