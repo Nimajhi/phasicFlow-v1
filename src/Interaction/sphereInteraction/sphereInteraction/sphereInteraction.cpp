@@ -31,6 +31,7 @@ bool pFlow::sphereInteraction<cFM,gMM, cLT>::createSphereInteraction()
 		rhoD.deviceView(),
 		modelDict );
 
+	const_cast<sphereParticles&>(sphParticles_).initializeForceChain(modelDict);
 
 	uint32 nPrtcl = sphParticles_.size();
 
@@ -53,7 +54,12 @@ template<typename cFM,typename gMM,template <class, class, class> class cLT>
 bool pFlow::sphereInteraction<cFM,gMM, cLT>::sphereSphereInteraction()
 {
 	auto lastItem = ppContactList_().loopCount();
-
+	
+	if (sphParticles_.isForceChainActive()) {
+        // Cast only when needed for modification
+        const_cast<sphereParticles&>(sphParticles_).getForceChain().resetPairCounter();
+    }
+	
 	// create the kernel functor 
 	pFlow::sphereInteractionKernels::ppInteractionFunctor 
 		ppInteraction(
