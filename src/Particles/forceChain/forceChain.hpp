@@ -2,9 +2,7 @@
 #define __forceChain_hpp__
 
 #include "dynamicPointStructure.hpp"
-#include "objectFile.hpp"
 #include "systemControl.hpp"
-#include "dictionary.hpp"
 
 namespace pFlow
 {
@@ -31,7 +29,7 @@ private:
 public:
 
     forceChain(
-        systemControl& control, 
+        systemControl& control,
         dynamicPointStructure& dynPointStruct
     );
     
@@ -51,9 +49,11 @@ public:
     // Reset pair counter (used before sphere-sphere interaction)
     void resetPairCounter();
 
-    // Activate/deactivate force chain
-    void activateForceChain(systemControl& control, dynamicPointStructure& dynPointStruct);
+    // Activate writing force chain
+    void activateForceChain(systemControl& control,dynamicPointStructure& dynPointStruct);
   
+    void addInteraction(uint32 i, uint32 j, const realx3& FCn, const realx3& xi, const realx3& xj);
+    
     // Getters
     inline auto& forceChainFCn()
     {
@@ -100,10 +100,7 @@ public:
         return forceChainActive_; 
     }
 
-   inline bool hasForceChainFCn() const { return forceChainActive_ && forceChainFCn_; }
-    inline bool hasForceChainDist() const { return forceChainActive_ && forceChainDist_; }
-    inline bool hasForceChainPairs() const { return forceChainActive_ && forceChainPairs_; }
-    inline bool hasPairCounter() const { return forceChainActive_ && pairCounter_; }
+   
     
   bool isActive() const;
     ////
