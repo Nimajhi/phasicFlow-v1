@@ -127,6 +127,37 @@ public:
 	sphereParticles(systemControl& control, const sphereShape& shpShape);
 
 	~sphereParticles() override = default;
+	
+	forceChain& getForceChain() {
+        return *forceChain_;
+    }
+    
+    const forceChain& getForceChain() const {
+        return *forceChain_;
+    }
+    
+    bool isForceChainActive() const {
+        return forceChain_ && forceChain_->isActive();
+    }
+
+    // Initialize force chain from dictionary
+    bool initializeForceChain(const dictionary& modelDict) {
+    if (!forceChain_) {
+        // Use the protected method, not the private member
+        forceChain_ = makeUnique<forceChain>(this->control(), dynPointStruct());
+        
+        // Initialize from dict
+        bool initialized = forceChain_->initializeFromDict(modelDict);
+        
+        // Activate if needed
+        if (initialized && forceChain_->isActive()) {
+            forceChain_->activateForceChain(this->control(), dynPointStruct());
+        }
+        
+        return initialized;
+    }
+    return true;
+}
 
 	/**
 	 * Insert new particles in position with specified shapes
